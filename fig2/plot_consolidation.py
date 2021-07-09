@@ -2,8 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-fr_active = np.load("fr_active.npy")
-fr_silent = np.load("fr_silent.npy")
+fr_active = np.load("data/consolidation/fr_active.npy")
+fr_silent = np.load("data/consolidation/fr_silent.npy")
 
 y1 = np.mean(fr_active, axis=0)
 y2 = np.mean(fr_silent, axis=0)

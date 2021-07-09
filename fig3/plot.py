@@ -20,11 +20,11 @@ TIME = np.arange(0, 2000, 0.001)
 N2_EX = 80
 
 
-spikes = np.load("../original/recurrent43_data/30_spikes.npy")
+spikes = np.load("data/30_spikes.npy")
 fr = get_network_firing_rates(spikes.T, 1000, len(TIME))
 mean_e_fr = np.mean(fr[0:N2_EX], axis=0)
 std_e_fr = np.std(fr[0:N2_EX], axis=0)
-syn_w = np.load("../original/recurrent43_data/30_w.npy")
+syn_w = np.load("data/30_w.npy")
 syn_w = syn_w.reshape(len(syn_w), 1600)
 # remove zeros
 syn_w = syn_w.T[np.where(syn_w != 0)[1]]
@@ -32,8 +32,8 @@ mean_w = np.mean(syn_w, axis=0)
 std_w = np.std(syn_w, axis=0)
 
 
-e_input = np.load("../original/inputs/original/30_e_input.npy")
-i_input = np.load("../original/inputs/original/30_i_input.npy")
+e_input = np.load("data/30_e_input.npy")
+i_input = np.load("data/30_i_input.npy")
 
 e_input = e_input.T
 i_input = i_input.T
@@ -42,7 +42,7 @@ spikes = spikes.T
 
 isi_cv = []
 for i in range(80):
-    indices = np.where(spikes[i, -15001:-1001] == 1)  # last 10 seconds
+    indices = np.where(spikes[i, -15001:-1001] == 1)  
     timings = TIME[indices]
     diffs = np.diff(timings)
     isi_cv.append(np.std(diffs) / np.mean(diffs))
@@ -88,7 +88,7 @@ ax.set_yticks([])
 ax.set_xticks(np.arange(0, 2 + 1, 1))
 
 
-frs = np.load("../original/conntarget/repeats/fr_mat.npy").mean(axis=2)
+frs = np.load("data/fr_mat.npy").mean(axis=2)
 
 ax = fig.add_subplot(gs[3, :4])
 

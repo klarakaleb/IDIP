@@ -30,7 +30,7 @@ fr = get_network_firing_rates(spikes.T, 1000, len(TIME))
 np.save('fr.npy',fr)
 """
 
-fr = np.load("fr.npy")
+fr = np.load("data/fr.npy")
 
 ee_spar = np.load("data/original/ee_spar.npy")
 
@@ -39,19 +39,6 @@ sd_var_mat_v = np.load("data/vogels/var_sd.npy")
 
 lr_var_mat = np.load("data/original/var_lr.npy")
 
-
-#%%
-"""
-spikes_vogels = np.load("data/vogels/30_spikes.npy")
-fr_vogels = get_network_firing_rates(spikes_vogels.T, 1000, len(TIME))
-
-
-spikes_ii = np.load("data/II/30_spikes.npy")
-fr_II = get_network_firing_rates(spikes_ii.T, 1000, len(TIME))
-
-spikes_bigger = np.load("data/bigger/30_spikes.npy")
-fr_bigger = get_network_firing_rates(spikes_bigger.T, 1000, len(TIME))
-"""
 
 mean_i_fr = np.mean(fr[N2_EX:], axis=0)
 std_i_fr = np.std(fr[N2_EX:], axis=0)
@@ -82,7 +69,7 @@ for i in range(80, 100):
 isi_cv = np.array(isi_cv)
 np.save('isi_cv.npy',isi_cv)
 """
-isi_cv = np.load("isi_cv.npy")
+isi_cv = np.load("data/isi_cv.npy")
 
 # %%
 ####################################################################################################################################

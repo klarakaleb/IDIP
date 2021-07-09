@@ -16,8 +16,8 @@ def get_network_firing_rates(spikes, timewindow, len_time):
     return firing_rate
 
 
-cc = np.load("../recurrent43_data/cc.npy")
-cc2 = np.load("../../vogels/recurrent43_data/cc.npy")
+cc = np.load("data/cc.npy")
+cc2 = np.load("data/vogels/cc.npy")
 
 
 mean_cc = np.mean(cc, axis=0)
@@ -54,26 +54,9 @@ dirs = [
     893,
 ]
 
-"""
-mean_fr = np.zeros(shape=(len(dirs), len(TIME)))
-mean_fr_hetero = np.zeros(shape=(len(dirs), len(TIME)))
 
-count = 0
-for d in dirs:
-    print(d)
-    spikes = np.load("recurrent43_data/" + str(d) + "_spikes.npy")
-    fr = get_network_firing_rates(spikes.T, 1000, len(spikes))
-    mean_fr[count] = np.mean(fr[np.r_[0:7, 8:77, 78:80]], axis=0)
-    mean_fr_hetero[count] = np.mean(fr[np.r_[7, 77]], axis=0)
-    count += 1
-
-np.save("IDIP_hetero_repeats1.npy", mean_fr)
-np.save("IDIP_hetero_repeats2.npy", mean_fr_hetero)
-"""
-#%%
-
-hetero = np.load("IDIP_hetero_repeats1.npy")[:, : len(TIME)]
-hetero2 = np.load("IDIP_hetero_repeats2.npy")[:, : len(TIME)]
+hetero = np.load("data/hetero/IDIP_hetero_repeats1.npy")[:, : len(TIME)]
+hetero2 = np.load("data/hetero/IDIP_hetero_repeats2.npy")[:, : len(TIME)]
 
 mean_hetero = np.mean(hetero, axis=0)
 std_hetero = np.std(hetero, axis=0)
@@ -81,8 +64,8 @@ mean_hetero2 = np.mean(hetero2, axis=0)
 std_hetero2 = np.std(hetero2, axis=0)
 
 
-mean_fr_hetero = np.load("mean_fr2000.npy")
-mean_fr = np.load("../mean_fr2000.npy")
+mean_fr_hetero = np.load("data/hetero/mean_fr.npy")
+mean_fr = np.load("data/hetero/mean_fr_original.npy")
 
 
 #%%

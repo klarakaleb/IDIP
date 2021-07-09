@@ -9,7 +9,7 @@ for j in $connect:
 do
 for i in $targets:
 do
-python3 recurrent43.py $j $i $z
+python3 recurrent.py $j $i $z
 done
 done
 done

@@ -2,8 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-fr_silent = np.load("fr_silent.npy")
-fr_active = np.load("fr_active.npy")
+fr_silent = np.load("data/remap/fr_silent.npy")
+fr_active = np.load("data/remap/fr_active.npy")
 
 
 fs = 13
@@ -131,8 +131,8 @@ ybottom, ytop = ax.get_ylim()
 ax.set_aspect(abs((xright - xleft) / (ybottom - ytop)) * ratio)
 
 
-fr_silent = np.load("fr_silent_ni.npy")
-fr_active = np.load("fr_active_ni.npy")
+fr_silent = np.load("data/remap/fr_silent_ni.npy")
+fr_active = np.load("data/remap/fr_active_ni.npy")
 
 
 x = np.arange(0, 90, 0.001)

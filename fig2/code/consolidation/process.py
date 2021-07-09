@@ -29,11 +29,11 @@ fr_silent = np.zeros(shape=(len(dirs), 11))
 fr_inhibitory = np.zeros(shape=(len(dirs), 11))
 fr_total = np.zeros(shape=(len(dirs), 11))
 
-
+dirname = '../../data/consolidation/' 
 
 count = 0
 for d in dirs:
-    fr0 = np.load(str(d) + "56/0fr_trial.npy")
+    fr0 = np.load(dirname+ str(d) + "56/0fr_trial.npy")
     active = set(np.where(fr0[:100, :] != 0)[0])
     silent = set(range(100)) - active
     active = np.array(list(active))
@@ -53,7 +53,7 @@ for d in dirs:
     count += 1
 
 
-np.save("fr_silent.npy", fr_silent)
-np.save("fr_active.npy", fr_active)
-np.save("fr_inhibitory.npy", fr_inhibitory)
-np.save("total.npy", fr_total)
+np.save(dirname+"fr_silent.npy", fr_silent)
+np.save(dirname+"fr_active.npy", fr_active)
+np.save(dirname+"fr_inhibitory.npy", fr_inhibitory)
+np.save(dirname+"total.npy", fr_total)

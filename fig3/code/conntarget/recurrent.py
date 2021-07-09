@@ -13,12 +13,21 @@ from numba import jit
 # SET SEED
 # ----------------------------------------------------------------------------------------------------------------------
 
-seed = sys.argv[1]
+c_i = sys.argv[1]
+c_i = float(c_i)
+
+target = sys.argv[2]
+target = float(target)
+
+seed = sys.argv[3]
 seed = float(seed)
 seed = int(seed)
+
 np.random.seed(seed)
 
 print("seed: " + str(seed))
+print("target: " + str(target))
+print("c_i: " + str(c_i))
 
 # PARAMETERS
 # ----------------------------------------------------------------------------------------------------------------------
@@ -30,7 +39,7 @@ N2 = 100  # recurrent layer
 N2E = 80  # of which excitatory
 N = N1 + N2  # total number of neurons
 C = 0.1  # connectivity
-C_I = 2.5 * C
+C_I = c_i * C
 C_INPUT = 2 * C
 
 
@@ -55,7 +64,7 @@ INPUT_COEFF = 2.5  # relative strenght of input synapses
 W_MAX = 1.0  # maximum value for inhibitory synaptic weights
 ETA_I = 0.1 / 1e6  # inhibitory learning rate
 A_I = 1000  # inhibitory learning amplitude
-THETA_I = 5.5 / 10  # 000000 * 1e6  # target input for inhibitory neurons
+THETA_I = target / 10  # 000000 * 1e6  # target input for inhibitory neurons
 TAU_IL = 2 * 4 * TAU_M  # time constant for inhibitory learning [s]
 
 # simulation
@@ -79,7 +88,7 @@ EXP_E = np.exp(-DT / TAU_E)  # excitatory synapses exponential decay
 
 # DIRECTORY SETUP
 # ============================================================================================================
-path = "data/"
+path = "../data/" + str(seed) + '_'
 
 # UTILS (FUNCTIONS)
 # ============================================================================================================
@@ -191,16 +200,12 @@ w_in[w_in_mask.astype(bool)] = random_weights[: w_in_mask.sum()]
 w_in = w_in.T  # from pre-post to post-pre
 w_in = w_in * INPUT_COEFF
 
-# amplify two neurons
-w_in[7, :] = w_in[7, :] * 1.5
-w_in[77, :] = w_in[77, :] * 1.5
-
 
 w_rec = np.zeros(shape=(N2, N2))
 w_rec[w_rec_mask.astype(bool)] = random_weights[w_in_mask.sum() :]
 w_rec = w_rec.T  # from pre-post to post-pre
-w_rec[:N2E, N2E:] = w_rec[:N2E, N2E:] * 0.1  # initial inhibitory weights
-
+w_rec[:N2E, N2E:] = w_rec[:N2E, N2E:] * 0.1 / (c_i / 2.5)  # initial inhibitory weights
+w_rec[N2E:, :N2E] = w_rec[N2E:, :N2E] / (c_i / 2.5)  # scaling!
 
 w_in_mask = w_in_mask.T
 w_rec_mask = w_rec_mask.T
@@ -208,7 +213,6 @@ w_rec_mask = w_rec_mask.T
 # RECORDINGS
 
 v = np.repeat(V_REST, N2)  #  initial voltage
-
 
 #%%
 
@@ -269,18 +273,15 @@ def run(v, w_rec):
             w_i[:N2E, N2E:] += A_I * factor * dw
             w_i *= w_rec_mask  #  prevent new connections from forming
         # RECORDINGS - copies otherwise rewriting
-        w.append(w_i[:N2E, N2E:].copy())
+        if i % 1000 == 0:
+            w.append(w_i[:N2E, N2E:].copy())
         i_inputs.append(i_i.copy())
         spikes.append(s.copy())
         # reset for next iteration
         s[:] = 0
         factor[:] = 0
 
-    return (
-        w,
-        spikes,
-        i_inputs,
-    )
+    return w, spikes, i_inputs
 
 
 tstart = datetime.datetime.now()
@@ -291,8 +292,9 @@ w, spikes, i_inputs = run(v, w_rec)
 spikes = np.array(spikes)
 w = np.array(w)
 
-np.save(path + str(seed) + "_spikes.npy", spikes)
-np.save(path + str(seed) + "_w.npy", w[::1000])
+
+np.save(path + str(target) + "_" + str(c_i) + "_spikes.npy", spikes)
+np.save(path + str(target) + "_" + str(c_i) + "_w.npy", w)
 
 
 fr = get_network_firing_rates(spikes.T, 1000, LEN_TIME)
@@ -303,7 +305,7 @@ plt.close("all")
 fig = plt.figure()
 ax = plt.axes()
 ax.plot(TIME[::100], fr.transpose()[::100])
-plt.savefig(path + str(seed) + "_fr.png")
+plt.savefig(path + str(target) + "_" + str(c_i) + "_fr.png")
 
 
 i_inputs = np.array(i_inputs)
@@ -312,30 +314,35 @@ fig = plt.figure()
 ax = plt.axes()
 ax.plot(TIME[::100], i_inputs[::100])
 ax.plot(TIME[::100], np.repeat(THETA_I, len(TIME[::100])), "k--")
-plt.savefig(path + str(seed) + "_ii.png")
+plt.savefig(path + str(target) + "_" + str(c_i) + "_ii.png")
 
 plt.close("all")
 fig = plt.figure()
 ax = plt.axes()
 for i in range(N2 - N2E):
-    ax.plot(TIME[::100], w[::100, :, i])
-plt.savefig(path + str(seed) + "_w.png")
+    ax.plot(TIME[::1000], w[:, :, i])
+plt.savefig(path + str(target) + "_" + str(c_i) + "_w.png")
 
 
 import scipy.stats
 
-cc = np.zeros(shape=(133))
-for i in range(133):
+cc = np.zeros(shape=(40))
+for i in range(40):
     cc[i] = scipy.stats.spearmanr(
         np.mean(fr[0:80, 0:15000], axis=1),
         np.mean(fr[0:80, (i * 15000) : ((i + 1) * 15000)], axis=1),
     )[0]
 
-np.save(path + str(seed) + "_cc.npy", cc)
+np.save(path + str(target) + "_" + str(c_i) + "_cc.npy", cc)
 
 print(cc)
 
 print("Mean ex fr: " + str(fr[:80, -2000:-1000].mean()))
+
+
+fr_end = fr[:80, -16001:-1001].mean(axis=1)
+
+np.save(path + str(target) + "_" + str(c_i) + "_fr_end.npy", fr_end)
 
 tnow = datetime.datetime.now()
 totalsecs = (tnow - tstart).total_seconds()

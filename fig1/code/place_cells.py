@@ -76,7 +76,7 @@ EXP_E = np.exp(-DT / TAU_E)  # excitatory synapses exponential decay
 
 filename = "_trial.npy"
 
-dirname = str(seed) + str(N_RUNS) 
+dirname = '../data/'+ str(seed) + str(N_RUNS) 
 
 os.mkdir(dirname)
 

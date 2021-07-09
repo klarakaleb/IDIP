@@ -30,11 +30,11 @@ count = 0
 
 for i in range(len(dirs)):
     print(i)
-    cc_i = np.load('../../../fig3/data/'+str(dirs[i]) + "_cc.npy")
+    cc_i = np.load('../../../fig3/data/'+ str(dirs[i]) + "_cc.npy")
     cc[count] = cc_i
     count += 1
 
 print(np.mean(cc, axis=0))
 
-np.save("cc.npy", cc)
+np.save("../../data/cc.npy", cc)
 ~                       

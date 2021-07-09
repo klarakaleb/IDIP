@@ -77,7 +77,7 @@ EXP_E = np.exp(-DT / TAU_E)  # excitatory synapses exponential decay
 
 filename = "_trial.npy"
 
-dirname = str(seed) + str(N_RUNS) + '_ni'
+dirname = '../../data/remap/' + str(seed) + str(N_RUNS)
 
 os.mkdir(dirname)
 
@@ -314,7 +314,7 @@ def run(CA1_I_w, CA3_CA1_w):
         CA1_I_syn_c_i += GS * w_i_i * s[N2E:]
         s_t[:N1] = s_t[:N1] * EXP_M + input_spikes[i, :]
         # LEARNING
-        if n_runs != 1:
+        if n_runs >= 0:
             # INHIBITORY LEARNING
             delta_w = i_i - THETA_I
             w_i_i = w_i_i + (ETA_I * A_I * delta_w) * s[N2E:]
@@ -346,6 +346,8 @@ CA1_I_w = np.load(
 CA3_CA1_w = np.load(
     "../../fig1/" + str(seed) + "100" + str(target) + "/w_in_trial.npy"
 )[-1]
+
+
 
 w_in, w_i, spikes, inputs = run(CA1_I_w, CA3_CA1_w)
 

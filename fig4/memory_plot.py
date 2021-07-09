@@ -16,7 +16,7 @@ def get_network_firing_rates(spikes, timewindow, len_time):
     return firing_rate
 
 
-spikes = np.load("data/30_spikes_memory.npy")
+spikes = np.load("data/memory/30_spikes_memory.npy")
 
 
 #%%

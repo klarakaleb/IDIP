@@ -50,7 +50,7 @@ mean_fr_end_nh = np.zeros(shape=(len(dirs)))
 count = 0
 for d in dirs:
     print(d)
-    spikes = np.load("data/" + str(d) + "_spikes.npy")
+    spikes = np.load("../data/hetero/" + str(d) + "_spikes.npy")
     fr = get_network_firing_rates(spikes.T, 1000, len(spikes))
     mean_fr[count] = np.mean(fr[np.r_[0:7, 8:77, 78:80]], axis=0)
     mean_fr_hetero[count] = np.mean(fr[np.r_[7, 77]], axis=0)

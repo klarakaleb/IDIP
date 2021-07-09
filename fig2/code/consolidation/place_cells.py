@@ -10,9 +10,8 @@ tstart = datetime.datetime.now()
 seed = sys.argv[1]
 seed = float(seed)
 seed = int(seed)
+
 np.random.seed(seed)
-
-
 
 print(seed)
 
@@ -47,14 +46,14 @@ ETA_HOMEO = ETA_E * 0.1
 A_E = 1
 A_I = 1
 A_HOMEO = 1
-GS = 0.001  # 0.185
+GS = 0.001  
 W = 1.0  # basic weight unit
 WMAX = 1.5
 THETA_I = 0.2
 THETA_HOMEO = 5.2
 
 # SIMULATION
-N_RUNS = 3  # 100
+N_RUNS = 50
 TIME = np.arange(0, 30000, 1)
 DT = 1  # [ms]
 
@@ -77,7 +76,7 @@ EXP_E = np.exp(-DT / TAU_E)  # excitatory synapses exponential decay
 
 filename = "_trial.npy"
 
-dirname = str(seed) + str(N_RUNS)
+dirname = '../../data/consolidation/' + str(seed) + str(N_RUNS)
 
 os.mkdir(dirname)
 
@@ -216,17 +215,8 @@ for i in range(10):
     ax.plot(range(LEN_TIME),input_fr[i,:])
 
 """
-#%%
-# SETUP
-# ----------------------------------------------------------------------------------------------------------------------
-
-# RECORDINGS
-# CA3_CA1_syn_c = []
-# CA1_I_syn_c = []
-# CA1_E_syn_c = []
 
 
-# INITIAL
 
 
 # SIMULATION
@@ -260,12 +250,12 @@ def run(CA1_I_w, CA3_CA1_w):
                 active = set(np.where(fr[:100, :] != 0)[0])
                 active = np.array(list(active))
             np.save(dirname + "/" + str(n_runs) + "spikes" + filename, np.array(spikes))
-            np.save(dirname + "/" + str(n_runs) + "fr" + filename, fr[:])
+            np.save(dirname + "/" + str(n_runs) + "fr" + filename, fr[:, 0::100])
             np.save(
-                dirname + "/" + str(n_runs) + "w_i" + filename, np.array(w_i)
+                dirname + "/" + str(n_runs) + "w_i" + filename, np.array(w_i)[::100]
             )
             np.save(
-                dirname + "/" + str(n_runs) + "w_in" + filename, np.array(w_in)
+                dirname + "/" + str(n_runs) + "w_in" + filename, np.array(w_in)[::100]
             )
             np.save(
                 dirname + "/" + str(n_runs) + "i_i" + filename,
@@ -304,7 +294,7 @@ def run(CA1_I_w, CA3_CA1_w):
         dvdt[t < t_ref] = 0  #  refractory period
         v += dvdt
         v[t < t_ref] = V_REST
-        if n_runs == 1:
+        if n_runs % 5 != 0:
             v[active] = V_REST
         s[v >= THETA_M] = 1
         t_ref[v >= THETA_M] = t + T_REF
@@ -347,8 +337,6 @@ CA3_CA1_w = np.load(
     "../../fig1/" + str(seed) + "100" + str(target) + "/w_in_trial.npy"
 )[-1]
 
-
-
 w_in, w_i, spikes, inputs = run(CA1_I_w, CA3_CA1_w)
 
 
@@ -358,11 +346,11 @@ w_i = np.array(w_i)
 inputs = np.array(inputs)
 
 fr = get_network_firing_rates(spikes.T, 1000, TIME)
-np.save(dirname + "/" + "spikes" + filename, spikes)
-np.save(dirname + "/" + "fr" + filename, fr[:])
-np.save(dirname + "/" + "w_i" + filename, w_i[:])
-np.save(dirname + "/" + "w_in" + filename, w_in[:])
-np.save(dirname + "/" + "i_i" + filename, inputs[::100])
+np.save(dirname + "/" + str(N_RUNS) + "spikes" + filename, spikes)
+np.save(dirname + "/" + str(N_RUNS) + "fr" + filename, fr[:, 0::100])
+np.save(dirname + "/" + str(N_RUNS) + "w_i" + filename, w_i[::100])
+np.save(dirname + "/" + str(N_RUNS) + "w_in" + filename, w_in[::100])
+np.save(dirname + "/" + str(N_RUNS) + "i_i" + filename, inputs[::100])
 
 tnow = datetime.datetime.now()
 totalsecs = (tnow - tstart).total_seconds()

@@ -21,7 +21,7 @@ for si, s in enumerate(seeds):
         for ci, c in enumerate(connect):
             print(c)
             fr = np.load(
-                "data/"
+                "../data/"
                 + str(s)
                 + "_"
                 + str(t)
