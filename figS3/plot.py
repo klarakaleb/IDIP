@@ -265,7 +265,7 @@ ax.spines["right"].set_visible(False)
 
 ax.set_xticks(np.arange(0, 10 + 1, 2))
 labels = [item.get_text() for item in ax.get_xticklabels()]
-labels = np.arange(0, 11, 2) / 10
+labels = np.arange(0, 6, 1) / 10
 ax.set_xticklabels(labels)
 plt.tick_params(labelsize=tick)
 

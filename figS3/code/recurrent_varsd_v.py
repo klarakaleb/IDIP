@@ -13,16 +13,13 @@ from numba import jit
 # SET SEED
 # ----------------------------------------------------------------------------------------------------------------------
 
-# seed = sys.argv[1]
-# seed = float(seed)
-# seed = int(seed)
-
-lr = sys.argv[1]
-lr = float(lr)
+c = sys.argv[1]
+c = float(c)
 
 seed = sys.argv[2]
 seed = float(seed)
 seed = int(seed)
+
 
 np.random.seed(seed)
 
@@ -40,8 +37,6 @@ N = N1 + N2  # total number of neurons
 C = 0.1  # connectivity
 C_I = 2.5 * C
 C_INPUT = 2 * C
-
-
 # neuron model
 TAU_M = 0.020  # membrane time constant[s]
 V_REST = -0.060  # resting membrane potential [V]
@@ -50,44 +45,39 @@ THETA_M = -0.050  # spiking threshold [V]
 T_REF = 0.002  # membrane refractory period [s]
 V_E = 0  # excitatory reversal potential [V]
 V_I = -0.080  # inhibitory reversal potential [V]
-
 # synapses
 GS = 1 / 1000  # 000000 * 1e6  # basic unit of synaptic conductance [S]
 W = 1.0  # basic unit of synaptic weight
 TAU_E = 0.005  # time constant for excitatory synapses [s]
 TAU_I = 0.010  # time constant for inhibitory synapses[s]
-SD = 0.1  # standard deviation for the weights sampling distribution
+SD = c  # standard deviation for the weights sampling distribution
 INPUT_COEFF = 2.5  # relative strenght of input synapses
-
 # learning
 W_MAX = 1.0  # maximum value for inhibitory synaptic weights
-ETA_I = lr / 1e6  # inhibitory learning rate
+ETA_I = 0.0005 * 1 / 10  # inhibitory learning rate
 A_I = 1000  # inhibitory learning amplitude
 THETA_I = 5.5 / 10  # 000000 * 1e6  # target input for inhibitory neurons
 TAU_IL = 2 * 4 * TAU_M  # time constant for inhibitory learning [s]
-
+ALPHA = 0.2
 # simulation
 DT = 0.001  # simulation timestep [s]
-T = 10000  # total time [s]
+T = 2000  # total time [s]
 TIME = np.arange(
     0, T, DT
 )  # np.linspace(start=0, stop=T, num=T * 1000)  # simulation time [s]
 LEN_TIME = int(len(TIME))  # length of the simulation [ms]
-
 # input spikes
-FR = 10  # firing rate of inputs [Hz]
+FR = 10  # firing rate of inputs [Hz]p
 FRDT = FR * DT  # input spikes generator
-
 # constants
 EXP_M = np.exp(-DT / TAU_M)  # membrane exponential decay
 EXP_IL = np.exp(-DT / TAU_IL)  # inhibitory learning exponential decay
 EXP_I = np.exp(-DT / TAU_I)  # inhibitory synapses exponential decay
 EXP_E = np.exp(-DT / TAU_E)  # excitatory synapses exponential decay
 
-
 # DIRECTORY SETUP
 # ============================================================================================================
-path = "../data/original/lr/"
+path = "../data/vogels/varsd/"
 
 # UTILS (FUNCTIONS)
 # ============================================================================================================
@@ -187,21 +177,18 @@ input_spikes = get_random_inputs(N1, FRDT, TIME)
 
 np.random.seed(seed)
 n_syn = sum(sum(w_in_mask)) + sum(sum(w_rec_mask))
-random_weights = np.random.lognormal(np.log(W), SD, n_syn)
-
+random_weights = np.random.lognormal(np.log(W), 0.1, n_syn)  #  input weights same
+np.random.seed(seed)
+random_weights2 = np.random.lognormal(np.log(W), SD, n_syn)
 # VARIABLES SETUP
 # ============================================================================================================
-
 # SYNAPSES
-
 w_in = np.zeros(shape=(N2, N1))
 w_in[w_in_mask.astype(bool)] = random_weights[: w_in_mask.sum()]
 w_in = w_in.T  # from pre-post to post-pre
 w_in = w_in * INPUT_COEFF
-
-
 w_rec = np.zeros(shape=(N2, N2))
-w_rec[w_rec_mask.astype(bool)] = random_weights[w_in_mask.sum() :]
+w_rec[w_rec_mask.astype(bool)] = random_weights2[w_in_mask.sum() :]
 w_rec = w_rec.T  # from pre-post to post-pre
 w_rec[:N2E, N2E:] = w_rec[:N2E, N2E:] * 0.1  # initial inhibitory weights
 
@@ -256,7 +243,7 @@ def run(v, w_rec):
         v[t_ref < t] += dvdt[t_ref < t]
         s[v >= THETA_M] = 1
         t_ref[v >= THETA_M] = t + T_REF
-        s_t *= EXP_M + s
+        s_t = s_t * EXP_M + s
         # INPUT LAYER
         syn_c_input_i *= EXP_E
         syn_c_input_i += GS * w_in * input_spikes[:, i]
@@ -265,39 +252,40 @@ def run(v, w_rec):
         syn_c_recurrent_i[:, N2E:] *= EXP_I
         syn_c_recurrent_i += GS * w_i * s
         if t > 15:
-            # INHIBITORY LEARNING
-            dw = ETA_I * (i_i - THETA_I) * s[N2E:]
-            factor[:, dw > 0] = W_MAX - w_i[:N2E, N2E:][:, dw > 0]
-            factor[:, dw < 0] = w_i[:N2E, N2E:][:, dw < 0]
-            w_i[:N2E, N2E:] += A_I * factor * dw
+            # INHIBITORY LEARNING - vogels rule
+            delta_w_pre = np.outer(s_t[N2E:], s[:N2E]).T
+            delta_w_post = np.outer((s_t[:N2E] - ALPHA), s[N2E:])
+            w_i[:N2E, N2E:] += ETA_I * (delta_w_pre + delta_w_post)
             w_i *= w_rec_mask  #  prevent new connections from forming
         # RECORDINGS - copies otherwise rewriting
-        if i % 1000 == 0:
-            w.append(w_i[:N2E, N2E:].copy())
+        w.append(w_i[:N2E, N2E:].copy())
         i_inputs.append(i_i.copy())
         spikes.append(s.copy())
         # reset for next iteration
         s[:] = 0
         factor[:] = 0
 
-    return w, spikes, i_inputs
+    return (
+        w,
+        spikes,
+        i_inputs,
+    )
 
 
 tstart = datetime.datetime.now()
 
 w, spikes, i_inputs = run(v, w_rec)
 
+
 spikes = np.array(spikes)
 w = np.array(w)
 
-np.save(path + str(lr) + "_" + str(seed) + "_spikes.npy", spikes)
-np.save(path + str(lr) + "_" + str(seed) + "_w.npy", w)
+
+np.save(path + str(c) + "_" + str(seed) + "_spikes.npy", spikes)
+np.save(path + str(c) + "_" + str(seed) + "_w.npy", w[::1000])
 
 
 fr = get_network_firing_rates(spikes.T, 1000, LEN_TIME)
-
-np.save(path + str(lr) + "_" + str(seed) + "_fr.npy", fr)
-
 
 import matplotlib.pyplot as plt
 
@@ -305,7 +293,7 @@ plt.close("all")
 fig = plt.figure()
 ax = plt.axes()
 ax.plot(TIME[::100], fr.transpose()[::100])
-plt.savefig(path + str(lr) + "_" + str(seed) + "_fr.png")
+plt.savefig(path + str(c) + "_" + str(seed) + "_fr.png")
 
 
 i_inputs = np.array(i_inputs)
@@ -314,46 +302,39 @@ fig = plt.figure()
 ax = plt.axes()
 ax.plot(TIME[::100], i_inputs[::100])
 ax.plot(TIME[::100], np.repeat(THETA_I, len(TIME[::100])), "k--")
-plt.savefig(path + str(lr) + "_" + str(seed) + "_ii.png")
+plt.savefig(path + str(c) + "_" + str(seed) + "_ii.png")
 
 plt.close("all")
 fig = plt.figure()
 ax = plt.axes()
 for i in range(N2 - N2E):
-    ax.plot(TIME[::1000], w[:, :, i])
-plt.savefig(path + str(lr) + "_" + str(seed) + "_w.png")
+    ax.plot(TIME[::100], w[::100, :, i])
+plt.savefig(path + str(c) + "_" + str(seed) + "_w.png")
 
 
 import scipy.stats
 
-cc = np.zeros(shape=(666))
-for i in range(666):
+cc = np.zeros(shape=(133))
+for i in range(133):
     cc[i] = scipy.stats.spearmanr(
         np.mean(fr[0:80, 0:15000], axis=1),
         np.mean(fr[0:80, (i * 15000) : ((i + 1) * 15000)], axis=1),
     )[0]
 
-np.save(path + str(lr) + "_" + str(seed) + "_cc.npy", cc)
+np.save(path + str(c) + "_" + str(seed) + "_cc.npy", cc)
 
 print(cc)
 
-isi_cv = []
-for i in range(80):
-    indices = np.where(spikes.T[i, -16001:-1001] == 1)  # last 15 seconds
-    timings = TIME[indices]
-    diffs = np.diff(timings)
-    isi_cv.append(np.std(diffs) / np.mean(diffs))
-
-np.save(path + str(lr) + "_" + str(seed) + "_isi_cv.npy", isi_cv)
-
-np.save(path + str(lr) + "_" + str(seed) + "_fr.npy", fr[:80].mean(axis=0)[::1000])
-np.save(path + str(lr) + "_" + str(seed) + "_std.npy", fr[:80].std(axis=0)[::1000])
-np.save(
-    path + str(lr) + "_" + str(seed) + "_fr_end.npy", fr[:80, -16001:-1001].mean(axis=1)
-)
-
-
 print("Mean ex fr: " + str(fr[:80, -2000:-1000].mean()))
+
+fr_end = fr[:80, -16001:-1001].mean(axis=1)
+
+np.save(path + str(c) + "_" + str(seed) + "_fr_end.npy", fr_end)
+
+fr_init = fr[:80, :15000].mean(axis=1)
+
+np.save(path + str(c) + "_" + str(seed) + "_fr_init.npy", fr_init)
+
 
 tnow = datetime.datetime.now()
 totalsecs = (tnow - tstart).total_seconds()
